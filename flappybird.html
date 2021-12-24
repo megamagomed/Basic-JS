@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+        }
+
+        #canvas {
+            background-color: greenyellow;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id='canvas' width="800" height="800"></canvas>
+
+    <script>
+        let c = document.querySelector('#canvas');
+        let ctx = canvas.getContext('2d')
+        const CANVASWIDTH = c.clientWidth;
+        const CANVASHEIGHT = c.clientHeight;
+        const BIRDSIZE = 25;
+        const MINOBSTSIZE = 100;
+        const MINOBSTWIDTH = 10;
+        const MAXFREESPACEFORBIRD = CANVASHEIGHT - MINOBSTSIZE * 2 - BIRDSIZE * 4;
+        const MINFREESPACEFORBIRD = BIRDSIZE * 4
+
+        class Game {
+            constructor(context, bird, obstacle, points) {
+                this.context = context;
+                this.lives = 3;
+                this.bird = new bird(context)
+                this.obstacleFactory = obstacle;
+                this.points = new points(context);
+                this.obstacles = [new obstacle(context)];
+                setInterval(() => {
+                    this.generateObstacle()
+                }, 5000);
+
+            }
+            update() {
+                this.bird.update();
+                // this.obstacle.update();
+                for (let i = 0; i < this.obstacles.length; i++) {
+                    const obstacle = this.obstacles[i];
+                    obstacle.update();
+                    if (this.bird.collision(obstacle) == true) {
+                        // this.points.stopCountPoints();
+                        clearInterval(this.points.interval);
+                    }
+                    if (obstacle.getPositionX() <= 0) {
+                        this.obstacles.shift();
+                    }
+
+                }
+                this.points.update();
+
+
+            }
+            render() {
+                this.bird.draw();
+
+                for (let i = 0; i < this.obstacles.length; i++) {
+                    const obstacle = this.obstacles[i];
+                    obstacle.draw();
+                }
+                this.points.draw()
+
+            }
+            run() {
+                const that = this.bird
+                window.addEventListener('keydown', function (e) { that.move(e) });
+            }
+
+            createObstacle() {
+                return new this.obstacleFactory(this.context);
+            }
+            generateObstacle() {
+                this.obstacles.push(this.createObstacle())
+            }
+
+        }
+
+        class Points {
+            constructor(context) {
+                this.context = context;
+                this.totalPoints = 0
+                this.interval = setInterval(() => {
+                    this.update()
+                }, 1000);
+            }
+            draw() {
+                this.context.strokeStyle = 'red';
+                this.context.font = '30px Arial';
+                this.context.strokeText('Current total points: ' + this.totalPoints, CANVASWIDTH / 2 - 100, 100);
+            }
+            update() {
+                this.totalPoints += 1;
+            }
+            stopCountPoints() {
+                clearInterval(this.interval);
+
+            }
+
+
+        }
+
+        class Bird {
+            constructor(context) {
+                this.context = context;
+                this.size = BIRDSIZE;
+                this.x = CANVASWIDTH / 7;
+                this.y = CANVASHEIGHT / 2;
+                this.color = 'blue';
+                this.possibleClick = true;
+                this.gravity = 0.2;
+                this.velocity = 0;
+            }
+            draw() {
+                this.context.beginPath();
+                this.context.fillStyle = this.color;
+                this.context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                this.context.fill();
+            }
+            update() {
+                this.velocity += this.gravity
+                this.y += this.velocity;
+                if (this.y > CANVASHEIGHT - BIRDSIZE / 2) {
+                    this.y = CANVASHEIGHT - BIRDSIZE / 2;
+                }
+            }
+            move(e) {
+                if (e.code == 'Space') {
+                    this.velocity = -5
+                }
+
+            }
+            collision(obstacle) {
+
+                if ((this.x + this.size / 2) >= obstacle.startX - obstacle.obstacleWidth && (this.x + this.size / 2) <= obstacle.startX
+                    && (this.y <= obstacle.freeSpaceForBirdSizePositionY + this.size || this.y >= obstacle.freeSpaceForBirdSizePositionY + obstacle.freeSpaceForBirdSize - this.size)) {
+                    return true;
+                }
+                return false
+            }
+
+
+        }
+
+        class Obstacles {
+            constructor(context) {
+                this.context = context;
+                this.startX = CANVASWIDTH;
+                this.color = 'yellow';
+                this.speed = 3;
+                // this.maxObsHeight = CANVASHEIGHT - BIRDSIZE * 2 - MINOBSTSIZE;
+                // this.obstacleHeight = Math.floor(Math.random() * this.maxObsHeight + MINOBSTSIZE);
+                this.maxObsWidth = CANVASWIDTH / 3;
+                this.obstacleWidth = Math.floor(Math.random() * this.maxObsWidth + MINOBSTWIDTH);
+                this.freeSpaceForBirdSize = Math.floor(Math.random() * MAXFREESPACEFORBIRD) + MINFREESPACEFORBIRD;
+                this.freeSpaceForBirdSizePositionY = MINOBSTSIZE + Math.floor(Math.random() * (CANVASHEIGHT - this.freeSpaceForBirdSize - MINOBSTSIZE))
+            }
+            draw() {
+                this.context.beginPath();
+                this.context.fillStyle = this.color;
+                this.context.rect(this.startX - this.obstacleWidth, 0, this.obstacleWidth, this.freeSpaceForBirdSizePositionY);
+                this.context.rect(this.startX - this.obstacleWidth, this.freeSpaceForBirdSize + this.freeSpaceForBirdSizePositionY, this.obstacleWidth, CANVASHEIGHT - MINOBSTSIZE);
+                this.context.fill();
+            }
+            update() {
+                this.startX -= this.speed;
+            }
+            getPositionX() {
+                return this.startX;
+            }
+        }
+
+
+        let game = new Game(ctx, Bird, Obstacles, Points);
+        game.run();
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight)
+            game.update();
+            game.render();
+            requestAnimationFrame(update);
+        }
+
+        update();
+
+
+    </script>
+</body>
+
+</html>
