@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake</title>
+    <style>
+        body {
+            height: 100vh;
+            /* width: 100%; */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: brown;
+        }
+
+        .title {
+            font-size: 50px;
+            color: white;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+
+        #canvas {
+            background-color: rgb(153, 185, 172);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title">S N A K E</div>
+    <canvas id="canvas" width="800" height="800"></canvas>
+    <script>
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+
+        const CANVASWEIGHT = canvas.clientWidth;
+        const CANVASHEIGHT = canvas.clientHeight;
+        let a = document.querySelector('body');
+        a.addEventListener('keydown', controlSnake);
+        function controlSnake(event){
+            console.log(event.keyCode);
+            if (event.keyCode == 37){
+
+            }
+        }
+
+
+        class Game {
+            constructor() {
+                this.snakePositionX = CANVASWEIGHT / 2;
+                this.snakePositionY = CANVASHEIGHT / 2;
+                this.snakeThickness = '20';
+                this.snakeColor = 'green';
+                this.snakeSpeed = 3;
+
+            }
+            render() {
+                ctx.beginPath();
+                ctx.arc(this.snakePositionX, this.snakePositionY, this.snakeThickness, 0, 2 * Math.PI)
+                ctx.fillStyle = this.snakeColor;
+                ctx.fill();
+
+            }
+            update() {
+                this.snakePositionX +=this.snakeSpeed;
+                
+            }
+            run() {
+                this.render()
+                this.update()
+            }
+
+        }
+
+        let game = new Game();
+        function start(){
+            ctx.clearRect(0,0, CANVASWEIGHT, CANVASHEIGHT)
+            game.run();
+            requestAnimationFrame(start);
+
+        }
+        requestAnimationFrame(start);
+        
+
+
+    </script>
+</body>
+
+</html>
